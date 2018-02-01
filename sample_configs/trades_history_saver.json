@@ -1,0 +1,16 @@
+{
+  "btctradeua": {
+    "apiKey": "public_key",
+    "secret": "private_key"
+  },
+
+  "db": {
+    "host": "127.0.0.1",
+    "port": 5432,
+    "dbname": "dbname",
+    "user": "user",
+    "password": "password"
+  },
+
+  "table_btctradeua_history": "btctradeua.history"
+}

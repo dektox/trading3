@@ -1,0 +1,28 @@
+{
+  "btctradeua": {
+    "apiKey": "public_key",
+    "secret": "private_key"
+  },
+
+  "db": {
+    "host": "127.0.0.1",
+    "port": 5432,
+    "dbname": "dbname",
+    "user": "user",
+    "password": "password"
+  },
+
+  "log_file_path": "autotrader_sample_logger.log",
+  "telegram_bot_token": "telegram_bot_token",
+  "telegram_chat_id": "12345",
+
+  "max_order_age": 600,
+  "order_amount_mult": 1.0,
+  "buy_price_mult": 1.000,
+  "sell_price_mult": 1.000,
+
+  "min_mean_trade_amount": 100.0,
+  "max_trade_age": 600,
+  "target_users_names": ["mask", "zuck"],
+  "target_pair": "BTC/UAH"
+}

@@ -1,0 +1,5 @@
+data_processing/
+users_stats/
+trading_configs/
+.idea/
+__pycache__/

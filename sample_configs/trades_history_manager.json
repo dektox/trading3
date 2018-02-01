@@ -1,0 +1,29 @@
+{
+  "db": {
+    "host": "127.0.0.1",
+    "port": 5432,
+    "dbname": "dbname",
+    "user": "user",
+    "password": "password"
+  },
+
+
+  "schema": {
+    "orders": "btctradeua.history",
+    "orders_norm": "btctradeua.history_norm",
+    "balances": "btctradeua.history_balances",
+    "prices": "btctradeua.history_prices",
+    "users": "btctradeua.history_users"
+  },
+
+  "log_file_path": null,
+  "show_help": true,
+
+  "min_orders_count": 25,
+  "min_order_date": "2018-01-01 00:00:00+02",
+  "max_order_date": "2018-01-15 00:00:00+02",
+
+  "user_name": "zuck",
+  "symbol": "DOGE/UAH"
+
+}
