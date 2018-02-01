@@ -26,8 +26,8 @@ FROM
             SELECT user_name, symbol, count(*) AS buys_count
             FROM #orders_norm#
             WHERE #orders_norm#.order_side='buy'
-                AND order_date > '#min_order_date#'::timestamp with time zone
-                AND order_date < '#max_order_date#'::timestamp with time zone
+                AND order_date >= '#min_order_date#'::timestamp with time zone
+                AND order_date <= '#max_order_date#'::timestamp with time zone
             GROUP BY user_name, symbol
         ) AS _buys_count
 
@@ -36,8 +36,8 @@ FROM
             SELECT user_name, symbol, count(*) AS sells_count
             FROM #orders_norm#
             WHERE #orders_norm#.order_side='sell'
-                AND order_date > '#min_order_date#'::timestamp with time zone
-                AND order_date < '#max_order_date#'::timestamp with time zone
+                AND order_date >= '#min_order_date#'::timestamp with time zone
+                AND order_date <= '#max_order_date#'::timestamp with time zone
             GROUP BY user_name, symbol
         ) AS _sells_count
 
@@ -46,8 +46,8 @@ FROM
             SELECT user_name, symbol, avg(abs(balance_change_base)) AS avg_buy_amount
             FROM #orders_norm#
             WHERE #orders_norm#.order_side='buy'
-                AND order_date > '#min_order_date#'::timestamp with time zone
-                AND order_date < '#max_order_date#'::timestamp with time zone
+                AND order_date >= '#min_order_date#'::timestamp with time zone
+                AND order_date <= '#max_order_date#'::timestamp with time zone
             GROUP BY user_name, symbol
         ) AS _avg_buy_amount
 
@@ -56,8 +56,8 @@ FROM
             SELECT user_name, symbol, avg(abs(balance_change_base)) AS avg_sell_amount
             FROM #orders_norm#
             WHERE #orders_norm#.order_side='sell'
-                AND order_date > '#min_order_date#'::timestamp with time zone
-                AND order_date < '#max_order_date#'::timestamp with time zone
+                AND order_date >= '#min_order_date#'::timestamp with time zone
+                AND order_date <= '#max_order_date#'::timestamp with time zone
             GROUP BY user_name, symbol
         ) AS _avg_sell_amount
 
@@ -66,8 +66,8 @@ FROM
             SELECT user_name, symbol, sum(balance_change_total) AS total_profit
             FROM #orders_norm#
             WHERE TRUE
-                AND order_date > '#min_order_date#'::timestamp with time zone
-                AND order_date < '#max_order_date#'::timestamp with time zone
+                AND order_date >= '#min_order_date#'::timestamp with time zone
+                AND order_date <= '#max_order_date#'::timestamp with time zone
             GROUP BY user_name, symbol
         ) AS _total_profit
 
@@ -79,8 +79,8 @@ FROM
                 ELSE NULL END AS sh
             FROM #orders_norm#
             WHERE TRUE
-                AND order_date > '#min_order_date#'::timestamp with time zone
-                AND order_date < '#max_order_date#'::timestamp with time zone
+                AND order_date >= '#min_order_date#'::timestamp with time zone
+                AND order_date <= '#max_order_date#'::timestamp with time zone
             GROUP BY user_name, symbol
         ) AS _sh
     
@@ -117,8 +117,8 @@ FROM
                             ), 0) AS price_change
                         FROM #orders_norm#
                         WHERE TRUE
-                            AND order_date > '#min_order_date#'::timestamp with time zone
-                            AND order_date < '#max_order_date#'::timestamp with time zone
+                            AND order_date >= '#min_order_date#'::timestamp with time zone
+                            AND order_date <= '#max_order_date#'::timestamp with time zone
                             AND (user_name, symbol) IN (SELECT user_name, symbol FROM _selected_users)
                     ) AS _activity
             GROUP BY user_name, symbol
@@ -152,8 +152,8 @@ FROM
                             ), 0) AS price_change
                         FROM #orders_norm#
                         WHERE TRUE
-                            AND order_date > '#min_order_date#'::timestamp with time zone
-                            AND order_date < '#max_order_date#'::timestamp with time zone
+                            AND order_date >= '#min_order_date#'::timestamp with time zone
+                            AND order_date <= '#max_order_date#'::timestamp with time zone
                             AND (user_name, symbol) IN (SELECT user_name, symbol FROM _selected_users)
                     ) AS _activity
             GROUP BY user_name, symbol

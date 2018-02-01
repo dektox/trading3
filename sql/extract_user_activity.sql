@@ -75,7 +75,12 @@ SELECT
     ), 0) AS balance_change_total,
 
     COALESCE((
-        SELECT 1
+        SELECT
+            CASE
+            WHEN balance_change_trade < 0 THEN -1
+            WHEN balance_change_trade > 0 THEN 1
+            ELSE NULL
+            END
         FROM #orders_norm#
         WHERE
             #orders_norm#.order_date=period.order_date

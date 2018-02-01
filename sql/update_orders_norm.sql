@@ -10,7 +10,10 @@ SELECT
         END AS order_side,
         balance_change_trade,
         balance_change_base,
-        price*balance_change_trade+balance_change_base AS balance_change_total,
+        price*balance_trade
+            - lag(price) OVER (PARTITION BY user_name, symbol ORDER BY order_date)
+            * lag(balance_trade) OVER (PARTITION BY user_name, symbol ORDER BY order_date)
+            + balance_change_base AS balance_change_total,
         price,
         balance_base,
         balance_trade,

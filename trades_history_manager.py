@@ -37,7 +37,7 @@ def extract_users_stats_table():
     with open('users_stats/users_stats.csv', 'w+', encoding='utf8') as users_stats_file:
         users_stats_file.write(';'.join(fields_list)+'\n')
         for user in users_stats:
-            users_stats_file.write(';'.join([str(val) for val in user]) + '\n')
+            users_stats_file.write(';'.join([str(val if val is not None else '') for val in user]) + '\n')
         cout('Extracted users stats', n=1)
 
 
@@ -55,7 +55,7 @@ def extract_user_activity_table(user_name, symbol):
               'w+', encoding='utf8') as users_stats_file:
         users_stats_file.write(';'.join(fields_list)+'\n')
         for row in users_stats:
-            users_stats_file.write(';'.join([str(val) for val in row]) + '\n')
+            users_stats_file.write(';'.join([str(val if val is not None else '') for val in row]) + '\n')
         cout('Extracted {}, {} activity'.format(user_name, symbol), n=1)
 
 
