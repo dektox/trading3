@@ -64,6 +64,17 @@ SELECT
     ) AS balance_total,
 
     COALESCE((
+        SELECT balance_change_total
+        FROM #orders_norm#
+        WHERE
+            #orders_norm#.order_date=period.order_date
+            AND user_name='#user_name#'
+            AND symbol='#symbol#'
+        ORDER BY order_date DESC
+        LIMIT 1
+    ), 0) AS balance_change_total,
+
+    COALESCE((
         SELECT 1
         FROM #orders_norm#
         WHERE

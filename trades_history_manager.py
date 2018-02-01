@@ -48,7 +48,8 @@ def extract_user_activity_table(user_name, symbol):
         sql = set_tables(sql)
         users_stats = database.execute(sql)
     fields_list = ['order_date', 'price', 'price_change_1m',
-                   'balance_trade', 'balance_base', 'balance_total', 'was_active']
+                   'balance_trade', 'balance_base', 'balance_total', 'balance_change_total',
+                   'was_active']
     cout('Saving {}, {} activity...'.format(user_name, symbol))
     with open('users_stats/{}_{}_{}.csv'.format(user_name, symbol.split('/')[0], symbol.split('/')[1]),
               'w+', encoding='utf8') as users_stats_file:

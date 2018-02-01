@@ -11,10 +11,9 @@ from utils import load_config, Console, Telegram
 
 
 DEBUG = False
-DEFAULT_CONFIG = 'autotrader_config.json'
 EXCHANGE_TIMEOUT = 1
 
-config = load_config(DEFAULT_CONFIG)
+config = load_config()
 console = Console(log_file_name=config.log_file_path)
 telebot = Telegram(telegram_bot_token=config.telegram_bot_token, telegram_chat_id=config.telegram_chat_id)
 trader_commands = queue.Queue()
