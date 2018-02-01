@@ -1,12 +1,58 @@
-WITH _selected_users AS (
-    SELECT user_name, symbol
-    FROM (
-        SELECT user_name, symbol, count(*) AS cnt
-        FROM #orders_norm#
-        GROUP BY user_name, symbol
-    ) AS _top_users
-    WHERE cnt > #min_orders_count#
-)
+WITH
+    _selected_users AS (
+        SELECT user_name, symbol
+        FROM (
+            SELECT user_name, symbol, count(*) AS cnt
+            FROM #orders_norm#
+            WHERE TRUE
+                AND order_date >= '#min_order_date#'::timestamp with time zone
+                AND order_date <= '#max_order_date#'::timestamp with time zone
+            GROUP BY user_name, symbol
+        ) AS _top_users
+        WHERE cnt > #min_orders_count#
+    ),
+    _price_changes AS (
+        SELECT
+            order_date, order_side, symbol,
+            (
+                SELECT price
+                FROM #prices#
+                WHERE TRUE
+                    AND #prices#.symbol=_all_period.symbol
+                    AND #prices#.order_side=_all_period.order_side
+                    AND #prices#.order_date<=_all_period.order_date
+                ORDER BY order_date DESC
+                LIMIT 1
+            ) - (
+                SELECT price
+                FROM #prices#
+                WHERE TRUE
+                    AND #prices#.symbol=_all_period.symbol
+                    AND #prices#.order_side=_all_period.order_side
+                    AND #prices#.order_date<_all_period.order_date
+                ORDER BY order_date DESC
+                LIMIT 1
+            ) AS price_change
+        FROM
+            (
+                    (
+                        SELECT order_date
+                        FROM generate_series('#min_order_date#'::timestamp with time zone,
+                                             '#max_order_date#'::timestamp with time zone,
+                                             '1 minute') AS _period(order_date)
+                    ) AS _dates
+                CROSS JOIN
+                    (
+                        SELECT DISTINCT symbol
+                        FROM #prices#
+                    ) AS _symbols
+                CROSS JOIN
+                    (
+                        SELECT DISTINCT order_side
+                        FROM #prices#
+                    ) AS _order_sides
+            ) AS _all_period
+    )
 
 SELECT
     user_name,
@@ -17,8 +63,10 @@ SELECT
     avg_sell_amount,
     total_profit,
     sh,
+    active_price_change_corr_bin,
     active_price_change_corr_abs,
-    active_price_change_corr_bin
+    total_price_change_corr_bin,
+    total_price_change_corr_abs
 FROM
         _selected_users
     NATURAL JOIN
@@ -86,75 +134,98 @@ FROM
     
     NATURAL JOIN
         (
-            SELECT user_name, symbol, corr(price_change, balance_change_base) AS active_price_change_corr_bin
+            SELECT
+                user_name, symbol,
+                corr(price_change, balance_change_base) AS active_price_change_corr_bin
             FROM
+                    _price_changes
+                NATURAL INNER JOIN
                     (
                         SELECT
-                            order_date, user_name, symbol,
+                            order_date,
+                            order_side,
+                            user_name,
+                            symbol,
                             CASE
                                 WHEN balance_change_base > 0 THEN 1
                                 WHEN balance_change_base < 0 THEN -1
                                 ELSE 0
-                            END AS balance_change_base,
-                            COALESCE((
-                                SELECT price
-                                FROM #prices#
-                                WHERE TRUE
-                                    AND #prices#.symbol=#orders_norm#.symbol
-                                    AND #prices#.order_side=#orders_norm#.order_side
-                                    AND #prices#.order_date=#orders_norm#.order_date
-                                ORDER BY order_date DESC
-                                LIMIT 1
-                            ) - (
-                                SELECT price
-                                FROM #prices#
-                                WHERE TRUE
-                                    AND #prices#.symbol=#orders_norm#.symbol
-                                    AND #prices#.order_side=#orders_norm#.order_side
-                                    AND #prices#.order_date<#orders_norm#.order_date
-                                ORDER BY order_date DESC
-                                LIMIT 1
-                            ), 0) AS price_change
+                            END AS balance_change_base
                         FROM #orders_norm#
-                        WHERE TRUE
-                            AND order_date >= '#min_order_date#'::timestamp with time zone
-                            AND order_date <= '#max_order_date#'::timestamp with time zone
-                            AND (user_name, symbol) IN (SELECT user_name, symbol FROM _selected_users)
-                    ) AS _activity
+                    ) AS _orders_norm
             GROUP BY user_name, symbol
-    ) AS active_price_change_corr_bin
+        ) AS active_price_change_corr_bin
 
     NATURAL JOIN
         (
-            SELECT user_name, symbol, corr(price_change, balance_change_base) AS active_price_change_corr_abs
+            SELECT
+                user_name, symbol,
+                corr(price_change, balance_change_base) AS active_price_change_corr_abs
             FROM
+                    _price_changes
+                NATURAL INNER JOIN
                     (
                         SELECT
-                            order_date, user_name, symbol, balance_change_base,
-                            COALESCE((
-                                SELECT price
-                                FROM #prices#
-                                WHERE TRUE
-                                    AND #prices#.symbol=#orders_norm#.symbol
-                                    AND #prices#.order_side=#orders_norm#.order_side
-                                    AND #prices#.order_date=#orders_norm#.order_date
-                                ORDER BY order_date DESC
-                                LIMIT 1
-                            ) - (
-                                SELECT price
-                                FROM #prices#
-                                WHERE TRUE
-                                    AND #prices#.symbol=#orders_norm#.symbol
-                                    AND #prices#.order_side=#orders_norm#.order_side
-                                    AND #prices#.order_date<#orders_norm#.order_date
-                                ORDER BY order_date DESC
-                                LIMIT 1
-                            ), 0) AS price_change
+                            order_date,
+                            order_side,
+                            user_name,
+                            symbol,
+                            balance_change_base
                         FROM #orders_norm#
-                        WHERE TRUE
-                            AND order_date >= '#min_order_date#'::timestamp with time zone
-                            AND order_date <= '#max_order_date#'::timestamp with time zone
-                            AND (user_name, symbol) IN (SELECT user_name, symbol FROM _selected_users)
-                    ) AS _activity
+                    ) AS _orders_norm
             GROUP BY user_name, symbol
-    ) AS active_price_change_corr_abs
+        ) AS active_price_change_corr_abs
+
+    NATURAL JOIN
+        (
+            SELECT
+                user_name, symbol,
+                corr(price_change, (SELECT COALESCE(balance_change_base, 0))) AS total_price_change_corr_bin
+            FROM
+                    _price_changes
+                CROSS JOIN
+                    (
+                        SELECT DISTINCT user_name
+                        FROM _selected_users
+                    ) AS _users
+                NATURAL LEFT JOIN
+                    (
+                        SELECT
+                            order_date,
+                            order_side,
+                            user_name,
+                            symbol,
+                            CASE
+                                WHEN balance_change_base > 0 THEN 1
+                                WHEN balance_change_base < 0 THEN -1
+                                ELSE 0
+                            END AS balance_change_base
+                        FROM #orders_norm#
+                    ) AS _orders_norm
+            GROUP BY user_name, symbol
+        ) AS total_price_change_corr_bin
+
+    NATURAL JOIN
+        (
+            SELECT
+                user_name, symbol,
+                corr(price_change, (SELECT COALESCE(balance_change_base, 0))) AS total_price_change_corr_abs
+            FROM
+                    _price_changes
+                CROSS JOIN
+                    (
+                        SELECT DISTINCT user_name
+                        FROM _selected_users
+                    ) AS _users
+                NATURAL LEFT JOIN
+                    (
+                        SELECT
+                            order_date,
+                            order_side,
+                            symbol,
+                            user_name,
+                            balance_change_base
+                        FROM #orders_norm#
+                    ) AS _orders_norm
+            GROUP BY user_name, symbol
+        ) AS total_price_change_corr_abs

@@ -32,7 +32,9 @@ def extract_users_stats_table():
         users_stats = database.execute(sql)
     fields_list = ['user_name', 'symbol', 'buys_count', 'sells_count',
                    'avg_buy_amount', 'avg_sell_amount', 'total_profit',
-                   'sh', 'active_price_change_corr_abs', 'active_price_change_corr_bin']
+                   'sh',
+                   'active_price_change_corr_bin', 'active_price_change_corr_abs',
+                   'total_price_change_corr_bin', 'total_price_change_corr_abs']
     cout('Saving users stats...')
     with open('users_stats/users_stats.csv', 'w+', encoding='utf8') as users_stats_file:
         users_stats_file.write(';'.join(fields_list)+'\n')
