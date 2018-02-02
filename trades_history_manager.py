@@ -14,7 +14,7 @@ def set_tables(sql):
     sql = sql.replace('#orders#', config.schema.orders)
     sql = sql.replace('#orders_norm#', config.schema.orders_norm)
     sql = sql.replace('#balances#', config.schema.balances)
-    sql = sql.replace('#users#', config.schema.users)
+    sql = sql.replace('#target_users#', config.schema.target_users)
     sql = sql.replace('#min_orders_count#', str(config.min_orders_count))
     sql = sql.replace('#min_order_date#', str(config.min_order_date))
     sql = sql.replace('#max_order_date#', str(config.max_order_date))

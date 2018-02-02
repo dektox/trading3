@@ -9,7 +9,8 @@ WITH
                 AND order_date <= '#max_order_date#'::timestamp with time zone
             GROUP BY user_name, symbol
         ) AS _top_users
-        WHERE cnt > #min_orders_count#
+        WHERE
+            cnt > #min_orders_count# OR user_name IN (SELECT user_name FROM #target_users#)
     ),
     _price_changes AS (
         SELECT
@@ -69,7 +70,7 @@ SELECT
     total_price_change_corr_abs
 FROM
         _selected_users
-    NATURAL JOIN
+    NATURAL LEFT JOIN
         (
             SELECT user_name, symbol, count(*) AS buys_count
             FROM #orders_norm#
@@ -79,7 +80,7 @@ FROM
             GROUP BY user_name, symbol
         ) AS _buys_count
 
-    NATURAL JOIN
+    NATURAL LEFT JOIN
         (
             SELECT user_name, symbol, count(*) AS sells_count
             FROM #orders_norm#
@@ -89,7 +90,7 @@ FROM
             GROUP BY user_name, symbol
         ) AS _sells_count
 
-    NATURAL JOIN
+    NATURAL LEFT JOIN
         (
             SELECT user_name, symbol, avg(abs(balance_change_base)) AS avg_buy_amount
             FROM #orders_norm#
@@ -99,7 +100,7 @@ FROM
             GROUP BY user_name, symbol
         ) AS _avg_buy_amount
 
-    NATURAL JOIN
+    NATURAL LEFT JOIN
         (
             SELECT user_name, symbol, avg(abs(balance_change_base)) AS avg_sell_amount
             FROM #orders_norm#
@@ -109,7 +110,7 @@ FROM
             GROUP BY user_name, symbol
         ) AS _avg_sell_amount
 
-    NATURAL JOIN
+    NATURAL LEFT JOIN
         (
             SELECT user_name, symbol, sum(balance_change_total) AS total_profit
             FROM #orders_norm#
@@ -119,7 +120,7 @@ FROM
             GROUP BY user_name, symbol
         ) AS _total_profit
 
-    NATURAL JOIN
+    NATURAL LEFT JOIN
         (
             SELECT user_name, symbol,
                 CASE stddev_samp(balance_change_total) > 1.0E-4
@@ -127,12 +128,13 @@ FROM
                 ELSE NULL END AS sh
             FROM #orders_norm#
             WHERE TRUE
+                AND (user_name, symbol) IN (SELECT user_name, symbol FROM _selected_users)
                 AND order_date >= '#min_order_date#'::timestamp with time zone
                 AND order_date <= '#max_order_date#'::timestamp with time zone
             GROUP BY user_name, symbol
         ) AS _sh
     
-    NATURAL JOIN
+    NATURAL LEFT JOIN
         (
             SELECT
                 user_name, symbol,
@@ -152,11 +154,12 @@ FROM
                                 ELSE 0
                             END AS balance_change_base
                         FROM #orders_norm#
+                        WHERE (user_name, symbol) IN (SELECT user_name, symbol FROM _selected_users)
                     ) AS _orders_norm
             GROUP BY user_name, symbol
         ) AS active_price_change_corr_bin
 
-    NATURAL JOIN
+    NATURAL LEFT JOIN
         (
             SELECT
                 user_name, symbol,
@@ -172,11 +175,12 @@ FROM
                             symbol,
                             balance_change_base
                         FROM #orders_norm#
+                        WHERE (user_name, symbol) IN (SELECT user_name, symbol FROM _selected_users)
                     ) AS _orders_norm
             GROUP BY user_name, symbol
         ) AS active_price_change_corr_abs
 
-    NATURAL JOIN
+    NATURAL LEFT JOIN
         (
             SELECT
                 user_name, symbol,
@@ -201,11 +205,12 @@ FROM
                                 ELSE 0
                             END AS balance_change_base
                         FROM #orders_norm#
+                        WHERE (user_name, symbol) IN (SELECT user_name, symbol FROM _selected_users)
                     ) AS _orders_norm
             GROUP BY user_name, symbol
         ) AS total_price_change_corr_bin
 
-    NATURAL JOIN
+    NATURAL LEFT JOIN
         (
             SELECT
                 user_name, symbol,
@@ -226,6 +231,7 @@ FROM
                             user_name,
                             balance_change_base
                         FROM #orders_norm#
+                        WHERE (user_name, symbol) IN (SELECT user_name, symbol FROM _selected_users)
                     ) AS _orders_norm
             GROUP BY user_name, symbol
         ) AS total_price_change_corr_abs

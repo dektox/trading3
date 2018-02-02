@@ -75,24 +75,15 @@ class Config:
 
 
 class Telegram:
-    def __init__(self, telegram_bot_token, telegram_chat_id):
-        self.chat_id = telegram_chat_id
-        self.bot = telegram.Bot(token=telegram_bot_token)
-        self._updater = telegram.ext.Updater(bot=self.bot)
+    def __init__(self, config):
+        self.config = config
+        self.admin_chat_id = config.admin_chat_id
+        self._bot = telegram.Bot(token=config.bot_token)
+        self._updater = telegram.ext.Updater(bot=self._bot)
 
     def log(self, msg):
-        self.bot.send_message(chat_id=self.chat_id, text=msg, parse_mode='HTML')
-
-    def log_order(self, comment, order):
-        msg = '<b>{:20}:</b>\n<pre>{}</pre>'.format(
-            str(comment)[:20],
-            'DATE: {}\nPAIR: {}\nSIDE: {}\nAMNT: {:.8f}\nPRICE: {:.8f}'.format(
-                str(strftime('%Y-%m-%d %H:%M:%S', localtime(order['timestamp'] / 1000)))[:20],
-                str(order['symbol'])[:10],
-                str(order['side'])[:5],
-                order['amount'], order['price'])
-        )
-        self.log(msg=msg)
+        if self.admin_chat_id:
+            self._bot.send_message(chat_id=self.admin_chat_id, text=msg, parse_mode='HTML')
 
     def add_handler(self, handler):
         self._updater.dispatcher.add_handler(handler)
