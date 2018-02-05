@@ -1,7 +1,7 @@
 import os
 import json
 from sys import argv
-from time import time, strftime, localtime
+from time import time, strftime
 
 import telegram
 import telegram.ext
@@ -77,13 +77,13 @@ class Config:
 class Telegram:
     def __init__(self, config):
         self.config = config
-        self.admin_chat_id = config.admin_chat_id
+        self.log_chat_id = config.log_chat_id
         self._bot = telegram.Bot(token=config.bot_token)
         self._updater = telegram.ext.Updater(bot=self._bot)
 
     def log(self, msg):
-        if self.admin_chat_id:
-            self._bot.send_message(chat_id=self.admin_chat_id, text=msg, parse_mode='HTML')
+        if self.log_chat_id:
+            self._bot.send_message(chat_id=self.log_chat_id, text=msg, parse_mode='HTML')
 
     def add_handler(self, handler):
         self._updater.dispatcher.add_handler(handler)
@@ -97,6 +97,9 @@ class Telegram:
 
     def is_alive(self):
         return self._updater.running
+
+    def idle(self):
+        return self._updater.idle()
 
 
 class Console:
@@ -135,19 +138,8 @@ class Console:
 
         if self.log_file_name and text and (n or not is_ok):
             with open(self.log_file_name, 'a+', encoding='utf8') as log_file:
-                log_file.write(text + '\n')
+                log_file.write(text.strip() + '\n')
                 log_file.flush()
-
-    def log_order(self, comment, order, color=None):
-        msg = '{:20}: {}'.format(
-            str(comment)[:20],
-            '[DATE: {:20} PAIR: {:10} SIDE: {:5} AMNT: {:15.8f} PRICE: {:15.8f}]'.format(
-                str(strftime('%Y-%m-%d %H:%M:%S', localtime(order['timestamp'] / 1000)))[:20],
-                str(order['symbol'])[:10],
-                str(order['side'])[:5],
-                order['amount'], order['price'])
-        )
-        self.log(msg=msg, color=color, n=True)
 
     def wait_for_kbhit(self, comment='Press any key to continue...', is_ok=True):
         text = '{} {:<300}'.format(strftime('%Y-%m-%d %H:%M:%S'), str(comment))[:self.console_width]

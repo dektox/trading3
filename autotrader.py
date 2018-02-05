@@ -15,8 +15,32 @@ EXCHANGE_TIMEOUT = 1
 
 config = load_config()
 console = Console(log_file_name=config.log_file_path)
-telebot = Telegram(telegram_bot_token=config.telegram_bot_token, telegram_chat_id=config.telegram_chat_id)
+telebot = Telegram(config=config.telegram)
 trader_commands = queue.Queue()
+
+
+def console_log_order(comment, order, color=None):
+    msg = '{:20}: {}'.format(
+        str(comment)[:20],
+        '[DATE: {:20} PAIR: {:10} SIDE: {:5} AMNT: {:15.8f} PRICE: {:15.8f}]'.format(
+            str(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(order['timestamp'] / 1000)))[:20],
+            str(order['symbol'])[:10],
+            str(order['side'])[:5],
+            order['amount'], order['price'])
+    )
+    console.log(msg=msg, color=color, n=True)
+
+
+def telegram_log_order(comment, order):
+    msg = '<pre>'
+    msg += '{}\n'.format(str(comment))
+    msg += 'DATE:  {:20}\n'.format(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(order['timestamp'] / 1000))[:20])
+    msg += 'PAIR:  {:10}\n'.format(str(order['symbol'])[:10])
+    msg += 'SIDE:  {:5}\n'.format(str(order['side'])[:5])
+    msg += 'AMNT:  {:15.8f}\n'.format(order['amount'])
+    msg += 'PRICE: {:15.8f}'.format(order['price'])
+    msg += '</pre>'
+    telebot.log(msg=msg)
 
 
 class BTCTradeUA:
@@ -143,13 +167,12 @@ class TradeBookWatcher(threading.Thread):
                             if is_new:
                                 self.target_user_trades.put(trade)
                                 reported_orders_ids.append(trade['id'])
-                                console.log_order('New trade ({})'.format(trade['info']['user']), trade,
+                                console_log_order('New trade ({})'.format(trade['info']['user']), trade,
                                                   color=('yellow' if trade['side'] == 'sell' else 'blue'))
-                                telebot.log_order('New trade ({})'.format(trade['info']['user']), trade)
+                                telegram_log_order('New trade ({})'.format(trade['info']['user']), trade)
                             else:
                                 reported_orders_ids.append(trade['id'])
-                                console.log_order('Old trade ({})'.format(trade['info']['user']), trade)
-                                #telebot.log_order('Old trade ({})'.format(trade['info']['user']), trade)
+                                console_log_order('Old trade ({})'.format(trade['info']['user']), trade)
 
                     self.target_user_trades_fetched.set()
 
@@ -237,8 +260,7 @@ class Analyzer(threading.Thread):
                         'price': float(price['end_price'])*config.buy_price_mult
                     }
                     trader_commands.put(command)
-                    console.log_order('Analyzer\'s idea', command)
-                    telebot.log_order('Analyzer\'s idea', command)
+                    console_log_order('Analyzer\'s idea', command)
                 else:
                     amount = (total_amount_sell - total_amount_buy) * config.order_amount_mult
                     price = self.ex_api.get_market_price(side='sell', symbol=config.target_pair, amount=amount)
@@ -251,7 +273,7 @@ class Analyzer(threading.Thread):
                         'price': float(price['end_price'])*config.sell_price_mult
                     }
                     trader_commands.put(command)
-                    console.log_order('Analyzer\'s idea', command)
+                    console_log_order('Analyzer\'s idea', command)
 
                 errors_count = 0
             except KeyboardInterrupt:
@@ -296,8 +318,7 @@ class Trader(threading.Thread):
                                                     amount=command['amount'], price=command['price'])
                     if resp['status'] is True:
                         self.orders[resp['order_id']] = command
-                        console.log_order('NEW order', command)
-                        telebot.log_order('NEW order', command)
+                        console_log_order('NEW order', command)
                     else:
                         console.log('{:20}: {}'.format('Trader', 'Failed to create order.'), is_ok=0)
 
@@ -306,11 +327,11 @@ class Trader(threading.Thread):
                     resp = self.ex_api.check_order(order_id=order_id)
                     if resp['status'] == 'processed':
                         del self.orders[order_id]
-                        console.log_order('FIN order', order, color='green')
-                        telebot.log_order('FIN order', order)
+                        console_log_order('FIN order', order, color='green')
+                        telegram_log_order('FIN order', order)
                     elif (self.ex_api.milliseconds()-order['timestamp']) > self.config.max_order_age*1000:
-                        console.log_order('DEL order', order, color='red')
-                        telebot.log_order('DEL order', order)
+                        console_log_order('DEL order', order, color='red')
+                        telegram_log_order('DEL order', order)
                         self.ex_api.delete_order(symbol=order['symbol'], order_id=order_id)
 
                 errors_count = 0
@@ -343,13 +364,13 @@ class MarketPriceWatcher(threading.Thread):
         while True:
             try:
                 price_buy = self.ex_api.get_market_price(side='buy', symbol=config.target_pair,
-                                                         amount=1000.0)['got_sum']
+                                                         amount=1.0)['got_sum']
                 price_sell = self.ex_api.get_market_price(side='sell', symbol=config.target_pair,
-                                                          amount=1000.0)['cost_sum']
+                                                          amount=1.0)['cost_sum']
 
                 console.log('{:20}: {}'.format(
-                    'Market prices', '[BUY: {:.8f}    SELL: {:.8f}]'.format(float(price_buy)/1000.0,
-                                                                            float(price_sell)/1000.0)))
+                    'Market prices', '[BUY: {:.8f}    SELL: {:.8f}]'.format(float(price_buy)/1.0,
+                                                                            float(price_sell)/1.0)))
 
                 while True:
                     now = datetime.now()
