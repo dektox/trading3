@@ -9,11 +9,13 @@ from database import Postgres
 
 DEBUG = False
 DEFAULT_CONFIG = 'trading_configs/trades_history_saver.json'
-console = Console(log_file_name='trades_history_saver.log')
+
+config = load_config(DEFAULT_CONFIG)
+console = Console(log_file_name=config.log_file_path)
 cout = console.log
 
 
-def save_btctradeua_trades(config, db, api, pairs):
+def save_btctradeua_trades(db, api, pairs):
     for symbol in pairs:
         cout('Loading btctradeua trades for pair {}...'.format(symbol))
         trades = api.fetch_trades(symbol=symbol)
@@ -45,10 +47,6 @@ def main():
     errors_count = 0
     while True:
         try:
-            cout('Loading config "{}"...'.format(DEFAULT_CONFIG))
-            config = load_config(DEFAULT_CONFIG)
-            cout('Loaded config "{}"'.format(DEFAULT_CONFIG), n=1)
-
             cout('Connecting to "{}@{}:{}"...'.format(config.db.dbname, config.db.host, config.db.port))
             db = Postgres(config=config.db)
             db.initialize()
@@ -65,7 +63,7 @@ def main():
             everything_is_actual = True
             while everything_is_actual:
                 cout('', n=1)
-                save_btctradeua_trades(config=config, db=db, api=btctradeua_api, pairs=btctradeua_pairs)
+                save_btctradeua_trades(db=db, api=btctradeua_api, pairs=btctradeua_pairs)
 
                 cout('Waiting...')
                 while True:
@@ -73,7 +71,7 @@ def main():
                     if now.minute == 0 and now.second == 0:
                         everything_is_actual = False
                         break
-                    elif now.minute % 10 == 0 and now.second == 0:
+                    elif now.minute % 5 == 0 and now.second == 0:
                         break
                     else:
                         sleep(0.5)
