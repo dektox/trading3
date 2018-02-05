@@ -3,7 +3,7 @@ WITH
         SELECT user_name, symbol
         FROM (
             SELECT user_name, symbol, count(*) AS cnt
-            FROM #orders_norm#
+            FROM #trades_norm#
             WHERE TRUE
                 AND order_date >= '#min_order_date#'::timestamp with time zone
                 AND order_date <= '#max_order_date#'::timestamp with time zone
@@ -73,8 +73,8 @@ FROM
     NATURAL LEFT JOIN
         (
             SELECT user_name, symbol, count(*) AS buys_count
-            FROM #orders_norm#
-            WHERE #orders_norm#.order_side='buy'
+            FROM #trades_norm#
+            WHERE #trades_norm#.order_side='buy'
                 AND order_date >= '#min_order_date#'::timestamp with time zone
                 AND order_date <= '#max_order_date#'::timestamp with time zone
             GROUP BY user_name, symbol
@@ -83,8 +83,8 @@ FROM
     NATURAL LEFT JOIN
         (
             SELECT user_name, symbol, count(*) AS sells_count
-            FROM #orders_norm#
-            WHERE #orders_norm#.order_side='sell'
+            FROM #trades_norm#
+            WHERE #trades_norm#.order_side='sell'
                 AND order_date >= '#min_order_date#'::timestamp with time zone
                 AND order_date <= '#max_order_date#'::timestamp with time zone
             GROUP BY user_name, symbol
@@ -93,8 +93,8 @@ FROM
     NATURAL LEFT JOIN
         (
             SELECT user_name, symbol, avg(abs(balance_change_base)) AS avg_buy_amount
-            FROM #orders_norm#
-            WHERE #orders_norm#.order_side='buy'
+            FROM #trades_norm#
+            WHERE #trades_norm#.order_side='buy'
                 AND order_date >= '#min_order_date#'::timestamp with time zone
                 AND order_date <= '#max_order_date#'::timestamp with time zone
             GROUP BY user_name, symbol
@@ -103,8 +103,8 @@ FROM
     NATURAL LEFT JOIN
         (
             SELECT user_name, symbol, avg(abs(balance_change_base)) AS avg_sell_amount
-            FROM #orders_norm#
-            WHERE #orders_norm#.order_side='sell'
+            FROM #trades_norm#
+            WHERE #trades_norm#.order_side='sell'
                 AND order_date >= '#min_order_date#'::timestamp with time zone
                 AND order_date <= '#max_order_date#'::timestamp with time zone
             GROUP BY user_name, symbol
@@ -113,7 +113,7 @@ FROM
     NATURAL LEFT JOIN
         (
             SELECT user_name, symbol, sum(balance_change_total) AS total_profit
-            FROM #orders_norm#
+            FROM #trades_norm#
             WHERE TRUE
                 AND order_date >= '#min_order_date#'::timestamp with time zone
                 AND order_date <= '#max_order_date#'::timestamp with time zone
@@ -126,7 +126,7 @@ FROM
                 CASE stddev_samp(balance_change_total) > 1.0E-4
                 WHEN TRUE THEN avg(balance_change_total)/stddev_samp(balance_change_total)
                 ELSE NULL END AS sh
-            FROM #orders_norm#
+            FROM #trades_norm#
             WHERE TRUE
                 AND (user_name, symbol) IN (SELECT user_name, symbol FROM _selected_users)
                 AND order_date >= '#min_order_date#'::timestamp with time zone
@@ -153,7 +153,7 @@ FROM
                                 WHEN balance_change_base < 0 THEN -1
                                 ELSE 0
                             END AS balance_change_base
-                        FROM #orders_norm#
+                        FROM #trades_norm#
                         WHERE (user_name, symbol) IN (SELECT user_name, symbol FROM _selected_users)
                     ) AS _orders_norm
             GROUP BY user_name, symbol
@@ -174,7 +174,7 @@ FROM
                             user_name,
                             symbol,
                             balance_change_base
-                        FROM #orders_norm#
+                        FROM #trades_norm#
                         WHERE (user_name, symbol) IN (SELECT user_name, symbol FROM _selected_users)
                     ) AS _orders_norm
             GROUP BY user_name, symbol
@@ -204,7 +204,7 @@ FROM
                                 WHEN balance_change_base < 0 THEN -1
                                 ELSE 0
                             END AS balance_change_base
-                        FROM #orders_norm#
+                        FROM #trades_norm#
                         WHERE (user_name, symbol) IN (SELECT user_name, symbol FROM _selected_users)
                     ) AS _orders_norm
             GROUP BY user_name, symbol
@@ -230,7 +230,7 @@ FROM
                             symbol,
                             user_name,
                             balance_change_base
-                        FROM #orders_norm#
+                        FROM #trades_norm#
                         WHERE (user_name, symbol) IN (SELECT user_name, symbol FROM _selected_users)
                     ) AS _orders_norm
             GROUP BY user_name, symbol

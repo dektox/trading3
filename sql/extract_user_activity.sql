@@ -32,9 +32,9 @@ SELECT
 
     (
         SELECT balance_trade
-        FROM #orders_norm#
+        FROM #trades_norm#
         WHERE
-            #orders_norm#.order_date<=period.order_date
+            #trades_norm#.order_date<=period.order_date
             AND user_name='#user_name#'
             AND symbol='#symbol#'
         ORDER BY order_date DESC
@@ -43,9 +43,9 @@ SELECT
 
     (
         SELECT balance_base
-        FROM #orders_norm#
+        FROM #trades_norm#
         WHERE
-            #orders_norm#.order_date<=period.order_date
+            #trades_norm#.order_date<=period.order_date
             AND user_name='#user_name#'
             AND symbol='#symbol#'
         ORDER BY order_date DESC
@@ -54,9 +54,9 @@ SELECT
 
     (
         SELECT balance_total
-        FROM #orders_norm#
+        FROM #trades_norm#
         WHERE
-            #orders_norm#.order_date<=period.order_date
+            #trades_norm#.order_date<=period.order_date
             AND user_name='#user_name#'
             AND symbol='#symbol#'
         ORDER BY order_date DESC
@@ -65,9 +65,9 @@ SELECT
 
     COALESCE((
         SELECT balance_change_total
-        FROM #orders_norm#
+        FROM #trades_norm#
         WHERE
-            #orders_norm#.order_date=period.order_date
+            #trades_norm#.order_date=period.order_date
             AND user_name='#user_name#'
             AND symbol='#symbol#'
         ORDER BY order_date DESC
@@ -81,9 +81,9 @@ SELECT
             WHEN balance_change_trade > 0 THEN 1
             ELSE NULL
             END
-        FROM #orders_norm#
+        FROM #trades_norm#
         WHERE
-            #orders_norm#.order_date=period.order_date
+            #trades_norm#.order_date=period.order_date
             AND user_name='#user_name#'
             AND symbol='#symbol#'
         LIMIT 1

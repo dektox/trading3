@@ -13,7 +13,7 @@ FROM
             amount_base,
             amount_trade
         FROM
-            #orders#
+            #trades#
     ) AS _orders
 GROUP BY
     order_date,

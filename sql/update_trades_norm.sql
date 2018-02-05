@@ -33,8 +33,8 @@ SELECT
                 SELECT price
                 FROM #prices#
                 WHERE TRUE
-                    AND #orders#.symbol=#prices#.symbol
-                    AND #orders#.order_date>=#prices#.order_date
+                    AND #trades#.symbol=#prices#.symbol
+                    AND #trades#.order_date>=#prices#.order_date
                 ORDER BY order_date DESC
                 LIMIT 1
             ) AS price

@@ -11,8 +11,8 @@ cout = Console().log
 
 def set_tables(sql):
     sql = sql.replace('#prices#', config.schema.prices)
-    sql = sql.replace('#orders#', config.schema.orders)
-    sql = sql.replace('#orders_norm#', config.schema.orders_norm)
+    sql = sql.replace('#trades#', config.schema.trades)
+    sql = sql.replace('#trades_norm#', config.schema.trades_norm)
     sql = sql.replace('#balances#', config.schema.balances)
     sql = sql.replace('#target_users#', config.schema.target_users)
     sql = sql.replace('#min_orders_count#', str(config.min_orders_count))
@@ -63,7 +63,7 @@ def extract_user_activity_table(user_name, symbol):
 
 def update_orders_table():
     cout('Updating orders...')
-    with open('sql/update_orders.sql', encoding='utf8') as update_sql:
+    with open('sql/update_trades.sql', encoding='utf8') as update_sql:
         sql = update_sql.read()
         sql = set_tables(sql)
         database.execute(sql)
@@ -73,7 +73,7 @@ def update_orders_table():
 
 def update_orders_norm_table():
     cout('Updating normalized orders...')
-    with open('sql/update_orders_norm.sql', encoding='utf8') as update_sql:
+    with open('sql/update_trades_norm.sql', encoding='utf8') as update_sql:
         sql = update_sql.read()
         sql = set_tables(sql)
         database.execute(sql)
