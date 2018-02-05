@@ -3,10 +3,10 @@ SELECT
 
     (
         SELECT price
-        FROM btctradeua.history_prices
+        FROM #prices#
         WHERE TRUE
-            AND btctradeua.history_prices.symbol='#symbol#'
-            AND btctradeua.history_prices.order_date<=period.order_date
+            AND #prices#.symbol='#symbol#'
+            AND #prices#.order_date<=period.order_date
             ORDER BY order_date DESC
             LIMIT 1
     ) AS price,
@@ -14,18 +14,18 @@ SELECT
     COALESCE(
     (
         SELECT price
-        FROM btctradeua.history_prices
+        FROM #prices#
         WHERE TRUE
-            AND btctradeua.history_prices.symbol='#symbol#'
-            AND btctradeua.history_prices.order_date<=period.order_date
+            AND #prices#.symbol='#symbol#'
+            AND #prices#.order_date<=period.order_date
             ORDER BY order_date DESC
             LIMIT 1
     ) - (
         SELECT price
-        FROM btctradeua.history_prices
+        FROM #prices#
         WHERE TRUE
-            AND btctradeua.history_prices.symbol='#symbol#'
-            AND btctradeua.history_prices.order_date<period.order_date
+            AND #prices#.symbol='#symbol#'
+            AND #prices#.order_date<period.order_date
         ORDER BY order_date DESC
         LIMIT 1
     ), 0) AS price_change_1m,

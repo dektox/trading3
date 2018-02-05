@@ -1,4 +1,4 @@
-INSERT INTO #orders_norm#
+INSERT INTO #trades_norm#
 SELECT
         date_trunc('minute', order_date) AS order_date,
         user_name,
@@ -38,7 +38,7 @@ SELECT
                 ORDER BY order_date DESC
                 LIMIT 1
             ) AS price
-        FROM #orders#
+        FROM #trades#
         WINDOW
             one_user_and_pair_and_minute_sorted AS (
                 PARTITION BY user_name, symbol, date_trunc('minute', order_date)
