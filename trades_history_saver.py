@@ -8,8 +8,8 @@ from database import Postgres
 
 
 DEBUG = False
-DEFAULT_CONFIG = 'trades_history_saver.json'
-console = Console(log_file_name='full_log.log')
+DEFAULT_CONFIG = 'trading_configs/trades_history_saver.json'
+console = Console(log_file_name='trades_history_saver.log')
 cout = console.log
 
 
@@ -19,8 +19,7 @@ def save_btctradeua_trades(config, db, api, pairs):
         trades = api.fetch_trades(symbol=symbol)
         trades_count = len(trades)
         for trade_index, trade in enumerate(trades):
-            cout('Saving btctradeua trades for pair {} ({}/{})...'.format(symbol,
-                                                                          trade_index + 1, trades_count))
+            cout('Saving btctradeua trades for pair {} ({}/{})...'.format(symbol, trade_index + 1, trades_count))
             parsed_trade = {
                 'order_id': trade['id'],
                 'order_date': trade['datetime'],
@@ -31,7 +30,7 @@ def save_btctradeua_trades(config, db, api, pairs):
                 'amount_trade': trade['info']['amnt_trade'],
                 'price': trade['price'],
             }
-            sql = "  INSERT INTO {} ({})".format(config.table_btctradeua_history,
+            sql = "  INSERT INTO {} ({})".format(config.schema.btctradeua.table_trades,
                                                  ','.join(parsed_trade.keys()))
             sql += " VALUES (%({})s)".format(')s,%('.join(parsed_trade.keys()))
             sql += " ON CONFLICT DO NOTHING"
@@ -85,10 +84,10 @@ def main():
             if DEBUG:
                 raise
             cout(str(ex), is_ok=0)
-            #errors_count += 1
-            #if errors_count > 10:
-            #    cout('Too many errors. Stopping', is_ok=0)
-            #    break
+            errors_count += 1
+            if errors_count > 100:
+                cout('Too many errors. Stopping', is_ok=0)
+                break
         finally:
             # noinspection PyBroadException
             try:
